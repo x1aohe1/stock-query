@@ -601,8 +601,11 @@
             for (let i = 0; i < watchList.length; i++) {
                 const stock = watchList[i];
                 const data = results[i];
-                const current = data ? data.current : 0;
-                const changePercent = data ? data.changePercent : 0;
+                
+                // 优先使用 stock-data.json 中的名称，如果没有则用 API 返回的
+                const displayName = stock.name || (data ? data.name : '') || stock.code;
+                const current = data && data.current ? data.current : 0;
+                const changePercent = data && data.changePercent ? data.changePercent : 0;
 
                 // 计算从关注至今的收益率
                 let watchGainPercent = 0;
@@ -632,7 +635,7 @@
                 const watchGainSign = watchGainPercent >= 0 ? '+' : '';
 
                 html += `<tr>
-                    <td><div class="stock-name">${stock.name || stock.code}</div><div class="stock-code">${stock.code}</div></td>
+                    <td><div class="stock-name">${displayName}</div><div class="stock-code">${stock.code}</div></td>
                     <td class="${priceClass}">¥${current > 0 ? current.toFixed(2) : '--'}</td>
                     <td class="${priceClass}">${changeSign}${changePercent.toFixed(2)}%</td>
                     <td class="${watchGainClass}">
@@ -659,12 +662,18 @@
                 const resp = await fetch(`${LOCAL_API}/quote?symbol=${code}`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    if (!data.error) {
+                    if (data && !data.error && data.name) {
+                        // 解码 Unicode 名称
+                        if (data.name.startsWith('\\u')) {
+                            try {
+                                data.name = JSON.parse('"' + data.name + '"');
+                            } catch (e) {}
+                        }
                         return data;
                     }
                 }
             } catch (e) {
-                console.log('Local API not available, using Tencent');
+                console.log('Local API not available');
             }
             
             // 降级到腾讯 API

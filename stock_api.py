@@ -73,13 +73,14 @@ def get_quote(symbol):
         if len(elements) < 33:
             return {'error': 'Invalid format'}
         
+        # 腾讯返回的 name 已经是正确的中文字符串（GBK 解码后）
         name = elements[1]
         current = float(elements[3]) if elements[3] else 0
         close = float(elements[4]) if elements[4] else 0
         
         return {
             'code': symbol.upper(),
-            'name': name,
+            'name': name,  # 已经是正确的中文
             'current': current,
             'close': close,
             'open': float(elements[5]) if elements[5] else 0,
