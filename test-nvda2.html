@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试英伟达行情 - Fetch 版</title>
+</head>
+<body>
+    <h1>测试英伟达行情 - Fetch 版</h1>
+    <div id="result">正在加载...</div>
+    
+    <script>
+        async function testNVDA() {
+            const result = document.getElementById('result');
+            
+            // 方法 1: 直接 fetch
+            try {
+                result.innerHTML = '方法 1: 使用 fetch 获取...<br>';
+                
+                const resp = await fetch('https://qt.gtimg.cn/q=usNVDA', {
+                    mode: 'cors',
+                    headers: {
+                        'Accept': '*/*'
+                    }
+                });
+                
+                if (!resp.ok) {
+                    throw new Error(`HTTP ${resp.status}: ${resp.statusText}`);
+                }
+                
+                const text = await resp.text();
+                result.innerHTML += `<div style="background:#f0f0f0;padding:10px;margin:10px 0;font-family:monospace;font-size:12px">${text.substring(0, 500)}</div>`;
+                
+                // 解析数据
+                const match = text.match(/="([^"]+)"/);
+                if (!match) {
+                    result.innerHTML += '<br><span style="color:red">❌ 无法解析数据格式</span>';
+                    return;
+                }
+                
+                const content = match[1];
+                const elements = content.split('~');
+                
+                if (elements.length < 50) {
+                    result.innerHTML += '<br><span style="color:red">❌ 数据不完整，只有 ' + elements.length + ' 个字段</span>';
+                    return;
+                }
+                
+                const name = elements[1];
+                const current = parseFloat(elements[3]) || 0;
+                const close = parseFloat(elements[4]) || 0;
+                const change = current - close;
+                const changePercent = close > 0 ? (change / close * 100) : 0;
+                
+                result.innerHTML += `
+                    <div style="font-size:24px;font-weight:bold;margin:20px 0;color:green">
+                        ✅ 成功获取英伟达行情！
+                    </div>
+                    <table style="border-collapse:collapse;font-size:16px">
+                        <tr><td style="padding:8px;border:1px solid #ddd">名称</td><td style="padding:8px;border:1px solid #ddd">${name}</td></tr>
+                        <tr><td style="padding:8px;border:1px solid #ddd">当前价</td><td style="padding:8px;border:1px solid #ddd;color:${change>=0?'red':'green'}">${current.toFixed(2)} USD</td></tr>
+                        <tr><td style="padding:8px;border:1px solid #ddd">昨收</td><td style="padding:8px;border:1px solid #ddd">${close.toFixed(2)} USD</td></tr>
+                        <tr><td style="padding:8px;border:1px solid #ddd">涨跌</td><td style="padding:8px;border:1px solid #ddd;color:${change>=0?'red':'green'}">${change.toFixed(2)} (${changePercent.toFixed(2)}%)</td></tr>
+                    </table>
+                `;
+                
+            } catch (e) {
+                result.innerHTML += `<br><span style="color:red">❌ 方法 1 失败：${e.message}</span>`;
+                result.innerHTML += '<br><br>请尝试方法 2：在浏览器控制台运行以下命令:<br>';
+                result.innerHTML += '<code style="background:#f0f0f0;padding:5px;display:block;margin:10px 0">fetch("https://qt.gtimg.cn/q=usNVDA").then(r=>r.text()).then(console.log)</code>';
+            }
+        }
+        
+        testNVDA();
+    </script>
+</body>
+</html>
