@@ -652,8 +652,16 @@
             return names[market] || market;
         }
 
-        // 获取单只股票数据
+        // 获取单只股票数据 - A 股/港股用 JSONP，美股用 fetch
         function fetchStockData(code) {
+            const market = detectMarket(code);
+            
+            // 美股使用 fetch + TextDecoder 解码 GBK
+            if (market === 'us') {
+                return fetchStockDataUS(code);
+            }
+            
+            // A 股/港股使用 JSONP
             return new Promise((resolve) => {
                 const varName = 'v_' + code.toLowerCase();
                 const script = document.createElement('script');
@@ -681,6 +689,55 @@
 
                 document.head.appendChild(script);
             });
+        }
+        
+        // 美股行情获取（fetch + GBK 解码）
+        async function fetchStockDataUS(code) {
+            try {
+                // 美股代码：USNVDA -> usNVDA
+                const tencentCode = 'us' + code.substring(2);
+                const url = TENCENT_API + 'q=' + tencentCode;
+                
+                const resp = await fetch(url);
+                const buffer = await resp.arrayBuffer();
+                
+                // 使用 TextDecoder 解码 GBK 编码
+                const decoder = new TextDecoder('gbk');
+                const text = decoder.decode(buffer);
+                
+                // 解析数据：v_usNVDA="200~英伟达~NVDA.OQ~177.82~..."
+                const match = text.match(/="([^"]+)"/);
+                if (!match) return null;
+                
+                const content = match[1];
+                const elements = content.split('~');
+                
+                if (elements.length < 50) return null;
+                
+                const name = elements[1] || '';
+                const current = parseFloat(elements[3]) || 0;
+                const close = parseFloat(elements[4]) || 0;
+                const open = parseFloat(elements[5]) || 0;
+                const high = parseFloat(elements[32]) || 0;
+                const low = parseFloat(elements[33]) || 0;
+                const change = current - close;
+                const changePercent = close > 0 ? (change / close * 100) : 0;
+                
+                return {
+                    code: code,
+                    name: name,
+                    current: current,
+                    close: close,
+                    open: open,
+                    high: high,
+                    low: low,
+                    change: change,
+                    changePercent: changePercent
+                };
+            } catch (e) {
+                console.error('获取美股行情失败:', code, e);
+                return null;
+            }
         }
 
         // 刷新关注列表
