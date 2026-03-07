@@ -652,31 +652,57 @@
             return names[market] || market;
         }
 
-        // 获取单只股票数据
-        function fetchStockData(code) {
-            return new Promise((resolve) => {
-                const varName = 'v_' + code.toLowerCase();
-                const script = document.createElement('script');
-                script.src = TENCENT_API + 'q=' + code.toLowerCase();
+        // 获取单只股票数据 - 使用 fetch + TextDecoder 支持美股
+        async function fetchStockData(code) {
+            try {
+                // 美股代码特殊处理：USNVDA -> usNVDA
+                let tencentCode = code.toLowerCase();
+                if (code.startsWith('US')) {
+                    tencentCode = 'us' + code.substring(2);
+                }
                 
-                const timeout = setTimeout(() => {
-                    if (document.head.contains(script)) {
-                        document.head.removeChild(script);
-                    }
-                    resolve(null);
-                }, 5000);
-
-                const checkVar = setInterval(() => {
-                    if (window[varName]) {
-                        clearTimeout(timeout);
-                        clearInterval(checkVar);
-                        const data = parseTencentData(window[varName], code);
-                        delete window[varName];
-                        if (document.head.contains(script)) {
-                            document.head.removeChild(script);
-                        }
-                        resolve(data);
-                    }
+                const url = TENCENT_API + 'q=' + tencentCode;
+                const resp = await fetch(url);
+                const buffer = await resp.arrayBuffer();
+                
+                // 使用 TextDecoder 解码 GBK 编码
+                const decoder = new TextDecoder('gbk');
+                const text = decoder.decode(buffer);
+                
+                // 解析数据
+                const match = text.match(/="([^"]+)"/);
+                if (!match) return null;
+                
+                const content = match[1];
+                const elements = content.split('~');
+                
+                if (elements.length < 50) return null;
+                
+                const name = elements[1] || '';
+                const current = parseFloat(elements[3]) || 0;
+                const close = parseFloat(elements[4]) || 0;
+                const open = parseFloat(elements[5]) || 0;
+                const high = parseFloat(elements[32]) || 0;
+                const low = parseFloat(elements[33]) || 0;
+                const change = current - close;
+                const changePercent = close > 0 ? (change / close * 100) : 0;
+                
+                return {
+                    code: code,
+                    name: name,
+                    current: current,
+                    close: close,
+                    open: open,
+                    high: high,
+                    low: low,
+                    change: change,
+                    changePercent: changePercent
+                };
+            } catch (e) {
+                console.error('获取行情失败:', code, e);
+                return null;
+            }
+        }
                 }, 50);
 
                 document.head.appendChild(script);
