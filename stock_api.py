@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
-股票行情 API 服务 - 简单版
-使用腾讯 API 作为数据源，提供 UTF-8 编码的 JSON
+股票行情 API 服务 - 混合方案
+实时行情：腾讯 API（快速稳定）
+历史数据：AkShare（可靠）
 """
 
 from http.server import HTTPServer, BaseHTTPRequestHandler
@@ -9,6 +10,11 @@ import json
 import urllib.request
 import urllib.parse
 import re
+import sys
+import os
+
+sys.path.insert(0, '/home/x1aohe1/.openclaw/workspace')
+import akshare as ak
 
 PORT = 8765
 
@@ -19,12 +25,12 @@ class StockAPIHandler(BaseHTTPRequestHandler):
         
         try:
             if parsed.path == '/quote':
-                symbol = params.get('symbol', [''])[0].upper()
+                symbol = params.get('symbol', [''])[0]
                 result = get_quote(symbol)
                 self.send_json(result)
                 
             elif parsed.path == '/history':
-                symbol = params.get('symbol', [''])[0].upper()
+                symbol = params.get('symbol', [''])[0]
                 date = params.get('date', [''])[0]
                 result = get_historical_open(symbol, date)
                 self.send_json(result)
@@ -58,11 +64,11 @@ class StockAPIHandler(BaseHTTPRequestHandler):
         print(f"[API] {args[0]}")
 
 def get_quote(symbol):
-    """获取实时行情 - 使用腾讯 API"""
+    """获取实时行情 - 使用腾讯 API（快速稳定）"""
     if not symbol:
         return {'error': 'Missing symbol'}
     
-    # 转换为腾讯格式
+    symbol = symbol.upper()
     code = symbol.lower()
     
     try:
@@ -71,9 +77,8 @@ def get_quote(symbol):
         req = urllib.request.Request(url, headers=headers)
         
         with urllib.request.urlopen(req, timeout=10) as resp:
-            content = resp.read().decode('gbk')  # 腾讯返回 GBK 编码
-            
-        # 解析：v_sh600519="1~贵州茅台~600519~1402.00~1399.04~..."
+            content = resp.read().decode('gbk')
+        
         match = re.search(r'="([^"]+)"', content)
         if not match:
             return {'error': 'Invalid response', 'code': symbol}
@@ -108,39 +113,43 @@ def get_quote(symbol):
         return {'error': str(e)}
 
 def get_historical_open(symbol, date):
-    """获取历史开盘价 - 使用腾讯 API"""
+    """获取历史开盘价 - 使用 AkShare（可靠）"""
     if not symbol or not date:
         return {'error': 'Missing symbol or date'}
     
-    code = symbol.lower()
+    symbol = symbol.upper()
+    
+    # 只支持 A 股
+    if not (symbol.startswith('SH') or symbol.startswith('SZ')):
+        return {'error': 'Only A-shares supported for history', 'symbol': symbol}
     
     try:
-        # 腾讯历史数据 API
-        url = f'https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param={code},day,,,300,qfq'
-        headers = {'User-Agent': 'Mozilla/5.0'}
-        req = urllib.request.Request(url, headers=headers)
+        # 转换日期格式
+        date_str = date.replace('-', '')
         
-        with urllib.request.urlopen(req, timeout=10) as resp:
-            data = json.loads(resp.read().decode('utf-8'))
+        from datetime import datetime, timedelta
+        target_date = datetime.strptime(date_str, '%Y%m%d')
+        start_date = (target_date - timedelta(days=30)).strftime('%Y%m%d')
+        end_date = (target_date + timedelta(days=30)).strftime('%Y%m%d')
         
-        if data.get('code') != 0 or not data.get('data'):
-            return {'open': None, 'error': 'No data'}
+        # 获取日 K 线数据
+        code = symbol.lower()
+        df = ak.stock_zh_a_daily(symbol=code, start_date=start_date, end_date=end_date)
         
-        kline = data['data'].get(code, {}).get('qfqday', [])
-        if not kline:
-            return {'open': None, 'error': 'No kline data'}
+        if len(df) == 0:
+            return {'open': None, 'error': 'No data for this period'}
         
         # 查找匹配日期的数据
-        target_date = date.replace('-', '')
-        for k in kline:
-            if k[0] == target_date:
-                return {'open': float(k[1]), 'date': date, 'symbol': symbol}
+        target_date_str = target_date.strftime('%Y-%m-%d')
+        matched = df[df['date'] == target_date_str]
         
-        # 找不到返回最近的
-        if kline:
-            return {'open': float(kline[0][1]), 'date': date, 'symbol': symbol, 'note': 'Using nearest date'}
+        if len(matched) > 0:
+            open_price = float(matched.iloc[0]['open'])
+            return {'open': open_price, 'date': date, 'symbol': symbol}
         
-        return {'open': None, 'error': 'Date not found'}
+        # 找不到精确匹配，返回最近的
+        open_price = float(df.iloc[0]['open'])
+        return {'open': open_price, 'date': date, 'symbol': symbol, 'note': 'Using nearest date'}
         
     except Exception as e:
         return {'error': str(e)}
@@ -148,6 +157,9 @@ def get_historical_open(symbol, date):
 if __name__ == '__main__':
     server = HTTPServer(('127.0.0.1', PORT), StockAPIHandler)
     print(f"🚀 Stock API Server running on http://127.0.0.1:{PORT}")
+    print(f"   Data sources:")
+    print(f"   - Real-time quote: Tencent API (fast & stable)")
+    print(f"   - Historical data: AkShare (reliable)")
     print(f"   Endpoints:")
     print(f"   - GET /quote?symbol=SH600519  实时行情")
     print(f"   - GET /history?symbol=SH600519&date=2025-01-15  历史开盘价")

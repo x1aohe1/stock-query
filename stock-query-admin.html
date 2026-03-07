@@ -717,16 +717,18 @@
             };
         }
         
-        // 获取历史开盘价
+        // 获取历史开盘价 - 使用本地 API（AkShare）
         async function fetchHistoricalOpen(code, date) {
             try {
                 const resp = await fetch(`${LOCAL_API}/history?symbol=${code}&date=${date}`);
                 if (resp.ok) {
                     const data = await resp.json();
-                    return data.open || null;
+                    if (data.open) {
+                        return data.open;
+                    }
                 }
             } catch (e) {
-                console.log('History API not available');
+                console.log('History API not available:', e);
             }
             return null;
         }
@@ -835,17 +837,24 @@
             // 如果 watchPrice 为空，使用当前价
             let finalWatchPrice = watchPrice > 0 ? watchPrice : currentPrice;
 
-            // 收集买入者
+            // 收集买入者，如果有日期没有价格，尝试获取历史开盘价
             const buyers = [];
-            document.querySelectorAll('#buyersContainer .buyer-item').forEach(field => {
+            const buyerFields = document.querySelectorAll('#buyersContainer .buyer-item');
+            for (const field of buyerFields) {
                 const inputs = field.querySelectorAll('input');
                 const buyerName = inputs[0].value.trim();
-                const buyerPrice = parseFloat(inputs[1].value) || 0;
+                let buyerPrice = parseFloat(inputs[1].value) || 0;
                 const buyerDate = inputs[2].value;
+                
                 if (buyerName) {
-                    buyers.push({ name: buyerName, price: buyerPrice, date: buyerDate, calculatedPrice: 0 });
+                    // 如果没有价格但有日期，获取历史开盘价
+                    let calculatedPrice = 0;
+                    if (buyerPrice === 0 && buyerDate) {
+                        calculatedPrice = await fetchHistoricalOpen(code, buyerDate) || 0;
+                    }
+                    buyers.push({ name: buyerName, price: buyerPrice, date: buyerDate, calculatedPrice });
                 }
-            });
+            }
 
             const stock = {
                 code,
