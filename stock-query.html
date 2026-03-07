@@ -793,21 +793,29 @@
             };
         }
 
-        // 获取历史开盘价
+        // 获取历史开盘价 - 使用正确的腾讯 API 参数格式
         async function fetchHistoricalOpen(code, date) {
             return new Promise((resolve) => {
                 const codeLower = code.toLowerCase();
-                const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${codeLower}_qfq_day_-1_300`;
+                // 正确的参数格式：code,day,,,count,adjust (逗号分隔)
+                const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${codeLower},day,,,300,qfq`;
                 
                 fetch(url)
                     .then(res => res.json())
                     .then(data => {
-                        const kline = data.data?.[codeLower]?.qfqday;
+                        if (data.code !== 0 || !data.data) {
+                            resolve(null);
+                            return;
+                        }
+                        
+                        // 获取 K 线数据
+                        const kline = data.data[codeLower]?.qfqday;
                         if (!kline || kline.length === 0) {
                             resolve(null);
                             return;
                         }
                         
+                        // K 线格式：[日期，开盘，收盘，最高，最低，成交量，成交额，...]
                         const targetDate = date.replace(/-/g, '');
                         for (let i = 0; i < kline.length; i++) {
                             if (kline[i][0] === targetDate) {
@@ -816,6 +824,7 @@
                             }
                         }
                         
+                        // 找不到精确匹配，返回最近的
                         resolve(parseFloat(kline[0][1]) || null);
                     })
                     .catch(() => resolve(null));
