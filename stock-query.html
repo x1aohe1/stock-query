@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>股票关注列表 - A 股/港股/美股</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .market-filter {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .market-btn {
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 20px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .market-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .market-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px 20px;
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: none;
+            border-radius: 10px 10px 0 0;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .tab:hover {
+            background: rgba(255,255,255,0.4);
+        }
+
+        .tab.active {
+            background: white;
+            color: #667eea;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 0 0 12px 12px;
+            padding: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            display: none;
+        }
+
+        .panel.active {
+            display: block;
+        }
+
+        .search-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        input[type="text"], input[type="number"], input[type="date"] {
+            flex: 1;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12 0%, #e67e22 100%);
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        .watch-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+
+        .watch-table th, .watch-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #e0e0e0;
+        }
+
+        .watch-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #666;
+            font-size: 13px;
+        }
+
+        .watch-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .stock-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stock-code {
+            color: #999;
+            font-size: 12px;
+        }
+
+        .market-tag {
+            display: inline-block;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .market-tag.a {
+            background: #ffe0e0;
+            color: #c0392b;
+        }
+
+        .market-tag.hk {
+            background: #e0ffe0;
+            color: #27ae60;
+        }
+
+        .market-tag.us {
+            background: #e0e0ff;
+            color: #3498db;
+        }
+
+        .price-up {
+            color: #e74c3c;
+        }
+
+        .price-down {
+            color: #27ae60;
+        }
+
+        .gain-positive {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .gain-negative {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .gain-neutral {
+            color: #666;
+        }
+
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+
+        .buyer-tag {
+            display: inline-block;
+            background: #e8f4fd;
+            color: #0066cc;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            margin: 2px;
+        }
+
+        .buyer-tag .gain {
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
+        .buyer-tag .gain.pos {
+            color: #e74c3c;
+        }
+
+        .buyer-tag .gain.neg {
+            color: #27ae60;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.show {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+
+        .modal-close:hover {
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .form-group input {
+            width: 100%;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .buyer-item {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .buyer-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .buyer-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .buyer-item-name {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .buyer-item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .buyer-item-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            font-size: 13px;
+        }
+
+        .buyer-item-info div {
+            color: #666;
+        }
+
+        .buyer-item-info strong {
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 10px;
+            padding: 20px;
+            color: white;
+        }
+
+        .stat-card.green {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+
+        .stat-card.red {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        .stat-card.blue {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        }
+
+        .stat-label {
+            font-size: 13px;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        .tips {
+            background: #e8f4fd;
+            color: #0066cc;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .tips strong {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .refresh-btn {
+            margin-bottom: 15px;
+        }
+
+        .hint {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+
+        .price-input-note {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            border-radius: 6px;
+            padding: 10px;
+            margin-top: 10px;
+            font-size: 13px;
+            color: #856404;
+        }
+
+        .total-return {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 6px;
+            padding: 8px 12px;
+            text-align: center;
+        }
+
+        .total-return .label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .total-return .value {
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .watch-table {
+                font-size: 12px;
+            }
+            
+            .watch-table th, .watch-table td {
+                padding: 8px;
+            }
+            
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .tab {
+                border-radius: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 全球股票关注列表</h1>
+        
+        <div class="market-filter">
+            <button class="market-btn active" onclick="filterMarket('all')">全部</button>
+            <button class="market-btn" onclick="filterMarket('a')">🇨🇳 A 股</button>
+            <button class="market-btn" onclick="filterMarket('hk')">🇭🇰 港股</button>
+            <button class="market-btn" onclick="filterMarket('us')">🇺🇸 美股</button>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('watch')">我的关注</button>
+            <button class="tab" onclick="switchTab('query')">行情查询</button>
+        </div>
+
+        <!-- 关注列表面板 -->
+        <div id="watchPanel" class="panel active">
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <button class="btn refresh-btn" onclick="refreshWatchList()">🔄 刷新行情</button>
+            <button class="btn" onclick="showAddModal()">➕ 添加关注</button>
+
+            <div id="watchListContent" style="margin-top: 20px;"></div>
+        </div>
+
+        <!-- 行情查询面板 -->
+        <div id="queryPanel" class="panel">
+            <div class="search-box">
+                <div class="input-group">
+                    <input 
+                        type="text" 
+                        id="stockInput" 
+                        placeholder="输入股票代码，如：600519、hk00700、usAAPL"
+                        autocomplete="off"
+                    >
+                    <button class="btn" onclick="queryStock()">查询</button>
+                </div>
+            </div>
+
+            <div class="tips">
+                <strong>💡 输入格式：</strong>
+                • A 股：600519 或 sh600519（沪市）、000001 或 sz000001（深市）<br>
+                • 港股：00700 或 hk00700（腾讯）、09988 或 hk09988（阿里）<br>
+                • 美股：AAPL 或 usAAPL（苹果）、TSLA 或 usTSLA（特斯拉）<br>
+                • 支持多个代码，用空格或逗号分隔
+            </div>
+
+            <div id="queryResult" style="display: none;"></div>
+        </div>
+    </div>
+
+    <!-- 添加/编辑关注模态框 -->
+    <div id="stockModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="modalTitle">添加关注</span>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="stockForm" onsubmit="saveStock(event)">
+                <input type="hidden" id="editIndex" value="-1">
+                
+                <div class="form-group">
+                    <label>股票代码 *</label>
+                    <input type="text" id="stockCode" required placeholder="如：600519、hk00700、usAAPL">
+                </div>
+
+                <div class="form-group">
+                    <label>股票名称</label>
+                    <input type="text" id="stockName" placeholder="自动获取">
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>关注价格</label>
+                        <input type="number" id="watchPrice" step="0.01" placeholder="自动获取当前价">
+                    </div>
+                    <div class="form-group">
+                        <label>关注日期 *</label>
+                        <input type="date" id="watchDate" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>推荐人</label>
+                    <input type="text" id="recommender" placeholder="谁推荐的这只股票">
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 15px 0 10px 0;">
+                    <label style="font-weight: bold; color: #333;">买入者列表</label>
+                    <button type="button" class="btn btn-small btn-success" onclick="addBuyerField()">➕ 添加买入者</button>
+                </div>
+                
+                <div id="buyersContainer"></div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn" style="flex: 1;">保存</button>
+                    <button type="button" class="btn btn-danger" onclick="closeModal()" style="flex: 1;">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 编辑买入者模态框 -->
+    <div id="buyerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <span class="modal-title" id="buyerModalTitle">编辑买入者</span>
+                <button class="modal-close" onclick="closeBuyerModal()">&times;</button>
+            </div>
+            <form id="buyerForm" onsubmit="saveBuyer(event)">
+                <input type="hidden" id="buyerStockIndex" value="-1">
+                <input type="hidden" id="buyerItemIndex" value="-1">
+                
+                <div class="form-group">
+                    <label>买入者姓名 *</label>
+                    <input type="text" id="buyerName" required placeholder="谁买入了这只股票">
+                </div>
+
+                <div class="form-group">
+                    <label>买入价格</label>
+                    <input type="number" id="buyerPrice" step="0.01" placeholder="输入买入成本价">
+                    <div class="hint">如果知道准确买入价格，填写此项</div>
+                </div>
+
+                <div class="form-group">
+                    <label>买入日期</label>
+                    <input type="date" id="buyerDate">
+                    <div class="hint">如果只知道买入日期，将按当日开盘价计算</div>
+                </div>
+
+                <div class="price-input-note" id="priceNote" style="display: none;">
+                    ⚠️ 当前使用历史开盘价：<strong id="historicalPriceDisplay"></strong><br>
+                    如果知道准确买入价格，请在上方填写，将覆盖此价格。
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn" style="flex: 1;">保存</button>
+                    <button type="button" class="btn btn-danger" onclick="closeBuyerModal()" style="flex: 1;">取消</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // 腾讯行情接口 - 支持 A 股/港股/美股
+        const TENCENT_API = 'https://qt.gtimg.cn/';
+        
+        // 本地存储键
+        const STORAGE_KEY_OLD = 'stockWatchList';
+        const STORAGE_KEY = 'stockWatchList_v3';
+
+        // 当前市场过滤
+        let currentMarketFilter = 'all';
+
+        // 获取关注列表
+        function getWatchList() {
+            let data = localStorage.getItem(STORAGE_KEY);
+            if (data) {
+                return JSON.parse(data);
+            }
+            
+            data = localStorage.getItem(STORAGE_KEY_OLD);
+            if (data) {
+                const oldList = JSON.parse(data);
+                const newList = oldList.map(stock => ({
+                    code: stock.code,
+                    name: stock.name || '',
+                    market: detectMarket(stock.code),
+                    watchPrice: stock.watchPrice || 0,
+                    watchDate: stock.watchDate || new Date().toISOString().split('T')[0],
+                    recommender: stock.recommender || '',
+                    buyers: stock.buyers || []
+                }));
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(newList));
+                localStorage.removeItem(STORAGE_KEY_OLD);
+                return newList;
+            }
+            
+            return [];
+        }
+
+        // 保存关注列表
+        function saveWatchList(list) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+        }
+
+        // 检测市场类型
+        function detectMarket(code) {
+            code = code.trim().toUpperCase();
+            if (code.startsWith('HK')) return 'hk';
+            if (code.startsWith('US')) return 'us';
+            if (code.startsWith('SH') || code.startsWith('SZ')) return 'a';
+            
+            // 根据代码规则判断
+            if (/^\d+$/.test(code)) {
+                if (code.startsWith('6') || code.startsWith('5') || code.startsWith('9')) return 'a';
+                if (code.startsWith('0') || code.startsWith('2') || code.startsWith('3')) return 'a';
+                if (code.length === 5 && code.startsWith('0')) return 'hk';
+                if (code.length === 5 && code.startsWith('9')) return 'hk';
+            }
+            return 'us'; // 默认美股（字母代码）
+        }
+
+        // 格式化股票代码
+        function formatStockCode(code) {
+            code = code.trim();
+            const upperCode = code.toUpperCase();
+            
+            // 如果已经有前缀，直接返回
+            if (upperCode.startsWith('SH') || upperCode.startsWith('SZ') || 
+                upperCode.startsWith('HK') || upperCode.startsWith('US')) {
+                return upperCode;
+            }
+            
+            // A 股
+            if (/^\d{6}$/.test(code)) {
+                if (code.startsWith('6') || code.startsWith('5') || code.startsWith('9')) {
+                    return 'SH' + code;
+                } else if (code.startsWith('0') || code.startsWith('2') || code.startsWith('3')) {
+                    return 'SZ' + code;
+                }
+            }
+            
+            // 港股（5 位数字）
+            if (/^\d{5}$/.test(code)) {
+                return 'HK' + code.padStart(5, '0');
+            }
+            
+            // 美股（字母代码）
+            if (/^[A-Za-z]+$/.test(code)) {
+                return 'US' + code.toUpperCase();
+            }
+            
+            return upperCode;
+        }
+
+        // 解析腾讯数据
+        function parseTencentData(data, code) {
+            if (!data || data.length < 10) {
+                return null;
+            }
+
+            let content = data;
+            if (content.includes('=')) {
+                content = content.split('=')[1];
+            }
+            content = content.replace(/^"/, '').replace(/";$/, '').replace(/"$/, '');
+
+            const elements = content.split('~');
+            
+            if (elements.length < 50) {
+                return null;
+            }
+
+            const name = elements[1] || '';
+            const current = parseFloat(elements[3]) || 0;
+            const close = parseFloat(elements[4]) || 0;
+            const open = parseFloat(elements[5]) || 0;
+            const high = parseFloat(elements[32]) || 0;
+            const low = parseFloat(elements[33]) || 0;
+
+            const change = current - close;
+            const changePercent = close > 0 ? (change / close * 100) : 0;
+
+            return {
+                code: code,
+                name: name,
+                current: current,
+                open: open,
+                close: close,
+                high: high,
+                low: low,
+                change: change,
+                changePercent: changePercent
+            };
+        }
+
+        // 获取历史开盘价
+        async function fetchHistoricalOpen(code, date) {
+            return new Promise((resolve) => {
+                const codeLower = code.toLowerCase();
+                const url = `https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=${codeLower}_qfq_day_-1_300`;
+                
+                fetch(url)
+                    .then(res => res.json())
+                    .then(data => {
+                        const kline = data.data?.[codeLower]?.qfqday;
+                        if (!kline || kline.length === 0) {
+                            resolve(null);
+                            return;
+                        }
+                        
+                        const targetDate = date.replace(/-/g, '');
+                        for (let i = 0; i < kline.length; i++) {
+                            if (kline[i][0] === targetDate) {
+                                resolve(parseFloat(kline[i][1]) || null);
+                                return;
+                            }
+                        }
+                        
+                        resolve(parseFloat(kline[0][1]) || null);
+                    })
+                    .catch(() => resolve(null));
+            });
+        }
+
+        // 切换标签页
+        function switchTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            
+            if (tab === 'watch') {
+                document.querySelector('.tab:nth-child(1)').classList.add('active');
+                document.getElementById('watchPanel').classList.add('active');
+                refreshWatchList();
+            } else {
+                document.querySelector('.tab:nth-child(2)').classList.add('active');
+                document.getElementById('queryPanel').classList.add('active');
+            }
+        }
+
+        // 市场过滤
+        function filterMarket(market) {
+            currentMarketFilter = market;
+            document.querySelectorAll('.market-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            refreshWatchList();
+        }
+
+        // 获取市场名称
+        function getMarketName(market) {
+            const names = { 'a': 'A 股', 'hk': '港股', 'us': '美股' };
+            return names[market] || market;
+        }
+
+        // 买入者字段计数
+        let buyerFieldCount = 0;
+
+        // 添加买入者字段
+        function addBuyerField(buyer = null) {
+            const container = document.getElementById('buyersContainer');
+            const index = buyerFieldCount++;
+            
+            const div = document.createElement('div');
+            div.className = 'buyer-item';
+            div.id = `buyerField_${index}`;
+            div.innerHTML = `
+                <div class="buyer-item-header">
+                    <span class="buyer-item-name">买入者 #${index + 1}</span>
+                    <button type="button" class="btn btn-small btn-danger" onclick="removeBuyerField(${index})">删除</button>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>姓名</label>
+                        <input type="text" name="buyerName_${index}" value="${buyer?.name || ''}" placeholder="买入者姓名">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>买入价格</label>
+                        <input type="number" name="buyerPrice_${index}" step="0.01" value="${buyer?.price || ''}" placeholder="已知价格填这里">
+                    </div>
+                    <div class="form-group">
+                        <label>买入日期</label>
+                        <input type="date" name="buyerDate_${index}" value="${buyer?.date || ''}">
+                    </div>
+                </div>
+                <div class="hint">💡 价格和日期二选一，如果都填，优先使用价格</div>
+            `;
+            container.appendChild(div);
+        }
+
+        // 删除买入者字段
+        function removeBuyerField(index) {
+            const field = document.getElementById(`buyerField_${index}`);
+            if (field) {
+                field.remove();
+            }
+        }
+
+        // 清空买入者字段
+        function clearBuyerFields() {
+            document.getElementById('buyersContainer').innerHTML = '';
+            buyerFieldCount = 0;
+        }
+
+        // 显示添加模态框
+        function showAddModal(editIdx = -1) {
+            const modal = document.getElementById('stockModal');
+            const form = document.getElementById('stockForm');
+            const title = document.getElementById('modalTitle');
+            
+            form.reset();
+            clearBuyerFields();
+            document.getElementById('editIndex').value = editIdx;
+            document.getElementById('watchDate').value = new Date().toISOString().split('T')[0];
+
+            if (editIdx >= 0) {
+                const list = getWatchList();
+                const stock = list[editIdx];
+                title.textContent = '编辑关注';
+                document.getElementById('stockCode').value = stock.code;
+                document.getElementById('stockName').value = stock.name || '';
+                document.getElementById('watchPrice').value = stock.watchPrice || '';
+                document.getElementById('watchDate').value = stock.watchDate || '';
+                document.getElementById('recommender').value = stock.recommender || '';
+                
+                if (stock.buyers && stock.buyers.length > 0) {
+                    stock.buyers.forEach(buyer => addBuyerField(buyer));
+                }
+            } else {
+                title.textContent = '添加关注';
+            }
+
+            modal.classList.add('show');
+            document.getElementById('stockCode').focus();
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('stockModal').classList.remove('show');
+        }
+
+        // 保存股票
+        async function saveStock(event) {
+            event.preventDefault();
+            
+            const editIdx = parseInt(document.getElementById('editIndex').value);
+            const code = formatStockCode(document.getElementById('stockCode').value);
+            let name = document.getElementById('stockName').value.trim();
+            const watchPrice = parseFloat(document.getElementById('watchPrice').value) || 0;
+            const watchDate = document.getElementById('watchDate').value;
+            const recommender = document.getElementById('recommender').value.trim();
+            const market = detectMarket(code);
+
+            // 收集买入者
+            const buyers = [];
+            const buyerFields = document.querySelectorAll('#buyersContainer .buyer-item');
+            buyerFields.forEach(field => {
+                const inputs = field.querySelectorAll('input');
+                const buyerName = inputs[0].value.trim();
+                const buyerPrice = parseFloat(inputs[1].value) || 0;
+                const buyerDate = inputs[2].value;
+                
+                if (buyerName) {
+                    buyers.push({
+                        name: buyerName,
+                        price: buyerPrice,
+                        date: buyerDate,
+                        calculatedPrice: 0
+                    });
+                }
+            });
+
+            // 如果名称为空，尝试获取
+            if (!name) {
+                try {
+                    const stockData = await fetchStockData(code);
+                    if (stockData) {
+                        name = stockData.name;
+                    }
+                } catch (e) {
+                    console.error('获取名称失败:', e);
+                }
+            }
+
+            const stock = {
+                code,
+                name,
+                market,
+                watchPrice: watchPrice || 0,
+                watchDate,
+                recommender,
+                buyers
+            };
+
+            const list = getWatchList();
+            
+            if (editIdx >= 0) {
+                if (!stock.watchPrice && list[editIdx].watchPrice) {
+                    stock.watchPrice = list[editIdx].watchPrice;
+                }
+                if (!stock.name && list[editIdx].name) {
+                    stock.name = list[editIdx].name;
+                }
+                stock.market = list[editIdx].market || market;
+                list[editIdx] = stock;
+            } else {
+                const exists = list.findIndex(s => s.code === code);
+                if (exists >= 0) {
+                    alert('该股票已在关注列表中！');
+                    return;
+                }
+                list.push(stock);
+            }
+
+            saveWatchList(list);
+            closeModal();
+            refreshWatchList();
+        }
+
+        // 删除股票
+        function deleteStock(index) {
+            if (confirm('确定要删除这只股票吗？')) {
+                const list = getWatchList();
+                list.splice(index, 1);
+                saveWatchList(list);
+                refreshWatchList();
+            }
+        }
+
+        // 获取单只股票数据
+        function fetchStockData(code) {
+            return new Promise((resolve) => {
+                const varName = 'v_' + code.toLowerCase();
+                const script = document.createElement('script');
+                script.src = TENCENT_API + 'q=' + code.toLowerCase();
+                
+                const timeout = setTimeout(() => {
+                    if (document.head.contains(script)) {
+                        document.head.removeChild(script);
+                    }
+                    resolve(null);
+                }, 5000);
+
+                const checkVar = setInterval(() => {
+                    if (window[varName]) {
+                        clearTimeout(timeout);
+                        clearInterval(checkVar);
+                        const data = parseTencentData(window[varName], code);
+                        delete window[varName];
+                        if (document.head.contains(script)) {
+                            document.head.removeChild(script);
+                        }
+                        resolve(data);
+                    }
+                }, 50);
+
+                document.head.appendChild(script);
+            });
+        }
+
+        // 刷新关注列表
+        async function refreshWatchList() {
+            const list = getWatchList();
+            const content = document.getElementById('watchListContent');
+            const statsGrid = document.getElementById('statsGrid');
+
+            // 过滤市场
+            const filteredList = currentMarketFilter === 'all' 
+                ? list 
+                : list.filter(s => s.market === currentMarketFilter);
+
+            if (filteredList.length === 0) {
+                content.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <h3>还没有关注的股票</h3>
+                        <p>点击上方"添加关注"按钮开始跟踪你的股票</p>
+                    </div>
+                `;
+                statsGrid.innerHTML = '';
+                return;
+            }
+
+            content.innerHTML = '<div class="loading">正在获取行情...</div>';
+
+            // 获取所有股票行情
+            const codes = filteredList.map(s => s.code);
+            const promises = codes.map(code => fetchStockData(code));
+            const results = await Promise.all(promises);
+
+            // 计算统计数据
+            let totalStocks = filteredList.length;
+            let totalBuyers = 0;
+            let positiveCount = 0;
+            let negativeCount = 0;
+            let totalBuyerGain = 0;
+            let buyerCountWithGain = 0;
+            let totalWatchGain = 0;
+            let watchCountWithGain = 0;
+
+            let html = `
+                <table class="watch-table">
+                    <thead>
+                        <tr>
+                            <th>股票</th>
+                            <th>当前价</th>
+                            <th>今日涨跌</th>
+                            <th>关注总收益</th>
+                            <th>推荐人</th>
+                            <th>买入者及收益</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            for (let i = 0; i < filteredList.length; i++) {
+                const stock = filteredList[i];
+                const data = results[i];
+                const current = data ? data.current : 0;
+                const changePercent = data ? data.changePercent : 0;
+                
+                // 计算关注总收益
+                let watchGainPercent = 0;
+                if (stock.watchPrice > 0 && current > 0) {
+                    watchGainPercent = ((current - stock.watchPrice) / stock.watchPrice) * 100;
+                    totalWatchGain += watchGainPercent;
+                    watchCountWithGain++;
+                }
+
+                // 计算每个买入者的收益
+                let buyerHtml = '';
+                if (stock.buyers && stock.buyers.length > 0) {
+                    for (const buyer of stock.buyers) {
+                        totalBuyers++;
+                        let buyPrice = buyer.price > 0 ? buyer.price : buyer.calculatedPrice;
+                        
+                        if (buyPrice === 0 && buyer.date) {
+                            const histPrice = await fetchHistoricalOpen(stock.code, buyer.date);
+                            if (histPrice && histPrice > 0) {
+                                buyPrice = histPrice;
+                                buyer.calculatedPrice = histPrice;
+                            }
+                        }
+                        
+                        let buyGainPercent = 0;
+                        if (buyPrice > 0 && current > 0) {
+                            buyGainPercent = ((current - buyPrice) / buyPrice) * 100;
+                            totalBuyerGain += buyGainPercent;
+                            buyerCountWithGain++;
+                        }
+                        
+                        const gainClass = buyGainPercent > 0 ? 'pos' : (buyGainPercent < 0 ? 'neg' : '');
+                        const gainSign = buyGainPercent >= 0 ? '+' : '';
+                        
+                        buyerHtml += `
+                            <div class="buyer-tag" title="买入价：${buyPrice > 0 ? buyPrice.toFixed(2) : '未知'}">
+                                ${buyer.name}
+                                <span class="gain ${gainClass}">${buyPrice > 0 ? gainSign + buyGainPercent.toFixed(2) + '%' : '待计算'}</span>
+                            </div>
+                        `;
+                    }
+                }
+
+                if (changePercent > 0) positiveCount++;
+                else if (changePercent < 0) negativeCount++;
+
+                const priceClass = changePercent >= 0 ? 'price-up' : 'price-down';
+                const changeSign = changePercent >= 0 ? '+' : '';
+                
+                const watchGainClass = watchGainPercent > 0 ? 'gain-positive' : (watchGainPercent < 0 ? 'gain-negative' : 'gain-neutral');
+                const watchGainSign = watchGainPercent >= 0 ? '+' : '';
+
+                const marketTag = `<span class="market-tag ${stock.market}">${getMarketName(stock.market)}</span>`;
+
+                html += `
+                    <tr>
+                        <td>
+                            <div class="stock-name">${stock.name || stock.code} ${marketTag}</div>
+                            <div class="stock-code">${stock.code}</div>
+                        </td>
+                        <td class="${priceClass}">¥${current > 0 ? current.toFixed(2) : '--'}</td>
+                        <td class="${priceClass}">${changeSign}${changePercent.toFixed(2)}%</td>
+                        <td>
+                            <div class="total-return">
+                                <div class="label">从关注至今</div>
+                                <div class="value ${watchGainClass}">
+                                    ${stock.watchPrice > 0 ? watchGainSign + watchGainPercent.toFixed(2) + '%' : '--'}
+                                </div>
+                            </div>
+                            ${stock.watchPrice > 0 ? '<div class="hint" style="text-align:center">关注价：' + stock.watchPrice.toFixed(2) + '</div>' : ''}
+                        </td>
+                        <td>${stock.recommender || '--'}</td>
+                        <td style="min-width: 200px;">${buyerHtml || '<span style="color:#999">无</span>'}</td>
+                        <td>
+                            <div class="actions">
+                                <button class="btn btn-small btn-info" onclick="showBuyerModal(${i})">管理买入者</button>
+                                <button class="btn btn-small btn-warning" onclick="showAddModal(${list.indexOf(stock)})">编辑</button>
+                                <button class="btn btn-small btn-danger" onclick="deleteStock(${list.indexOf(stock)})">删除</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            html += '</tbody></table>';
+            content.innerHTML = html;
+
+            // 更新统计
+            const avgWatchGain = watchCountWithGain > 0 ? totalWatchGain / watchCountWithGain : 0;
+            const avgBuyerGain = buyerCountWithGain > 0 ? totalBuyerGain / buyerCountWithGain : 0;
+
+            // 按市场统计
+            const marketStats = { a: 0, hk: 0, us: 0 };
+            list.forEach(s => marketStats[s.market] = (marketStats[s.market] || 0) + 1);
+
+            statsGrid.innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-label">关注股票数</div>
+                    <div class="stat-value">${totalStocks} ${currentMarketFilter !== 'all' ? '(' + getMarketName(currentMarketFilter) + ')' : ''}</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-label">A 股 / 港股 / 美股</div>
+                    <div class="stat-value" style="font-size:18px">${marketStats.a} / ${marketStats.hk} / ${marketStats.us}</div>
+                </div>
+                <div class="stat-card ${avgWatchGain >= 0 ? 'green' : 'red'}">
+                    <div class="stat-label">平均关注收益</div>
+                    <div class="stat-value">${avgWatchGain >= 0 ? '+' : ''}${avgWatchGain.toFixed(2)}%</div>
+                </div>
+                <div class="stat-card ${avgBuyerGain >= 0 ? 'green' : 'red'}">
+                    <div class="stat-label">平均买入收益</div>
+                    <div class="stat-value">${avgBuyerGain >= 0 ? '+' : ''}${avgBuyerGain.toFixed(2)}%</div>
+                </div>
+            `;
+
+            // 保存计算后的数据
+            saveWatchList(list);
+        }
+
+        // ============ 买入者管理 ============
+        
+        let currentStockIndex = -1;
+        let currentBuyerIndex = -1;
+
+        function showBuyerModal(stockIndex) {
+            currentStockIndex = stockIndex;
+            const list = getWatchList();
+            const stock = list[stockIndex];
+            
+            document.getElementById('buyerModalTitle').textContent = `管理买入者 - ${stock.name || stock.code}`;
+            document.getElementById('buyerForm').reset();
+            document.getElementById('buyerStockIndex').value = stockIndex;
+            document.getElementById('buyerItemIndex').value = '-1';
+            document.getElementById('priceNote').style.display = 'none';
+            
+            const container = document.getElementById('buyersContainer');
+            container.innerHTML = '';
+            
+            if (stock.buyers && stock.buyers.length > 0) {
+                stock.buyers.forEach((buyer, idx) => {
+                    const div = document.createElement('div');
+                    div.className = 'buyer-item';
+                    div.innerHTML = `
+                        <div class="buyer-item-header">
+                            <span class="buyer-item-name">${buyer.name}</span>
+                            <div class="buyer-item-actions">
+                                <button type="button" class="btn btn-small btn-warning" onclick="editBuyer(${idx})">编辑</button>
+                                <button type="button" class="btn btn-small btn-danger" onclick="deleteBuyer(${idx})">删除</button>
+                            </div>
+                        </div>
+                        <div class="buyer-item-info">
+                            <div>买入价：<strong>${buyer.price > 0 ? '¥' + buyer.price.toFixed(2) : (buyer.calculatedPrice > 0 ? '¥' + buyer.calculatedPrice.toFixed(2) + ' (历史)' : '未知')}</strong></div>
+                            <div>买入日：<strong>${buyer.date || '未填写'}</strong></div>
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+            
+            const addBtn = document.createElement('button');
+            addBtn.type = 'button';
+            addBtn.className = 'btn btn-success';
+            addBtn.style.width = '100%';
+            addBtn.style.marginTop = '10px';
+            addBtn.textContent = '➕ 添加新买入者';
+            addBtn.onclick = addNewBuyer;
+            container.appendChild(addBtn);
+            
+            document.getElementById('buyerModal').classList.add('show');
+        }
+
+        function closeBuyerModal() {
+            document.getElementById('buyerModal').classList.remove('show');
+            refreshWatchList();
+        }
+
+        function addNewBuyer() {
+            currentBuyerIndex = -1;
+            document.getElementById('buyerForm').reset();
+            document.getElementById('buyerItemIndex').value = '-1';
+            document.getElementById('priceNote').style.display = 'none';
+            document.getElementById('buyerModalTitle').textContent = '添加买入者';
+        }
+
+        function editBuyer(index) {
+            currentBuyerIndex = index;
+            const list = getWatchList();
+            const stock = list[currentStockIndex];
+            const buyer = stock.buyers[index];
+            
+            document.getElementById('buyerItemIndex').value = index;
+            document.getElementById('buyerName').value = buyer.name;
+            document.getElementById('buyerPrice').value = buyer.price || '';
+            document.getElementById('buyerDate').value = buyer.date || '';
+            document.getElementById('buyerModalTitle').textContent = '编辑买入者';
+            
+            if (buyer.price === 0 && buyer.calculatedPrice > 0) {
+                document.getElementById('historicalPriceDisplay').textContent = '¥' + buyer.calculatedPrice.toFixed(2);
+                document.getElementById('priceNote').style.display = 'block';
+            } else {
+                document.getElementById('priceNote').style.display = 'none';
+            }
+        }
+
+        function deleteBuyer(index) {
+            if (confirm('确定要删除这个买入者吗？')) {
+                const list = getWatchList();
+                const stock = list[currentStockIndex];
+                stock.buyers.splice(index, 1);
+                saveWatchList(list);
+                showBuyerModal(currentStockIndex);
+            }
+        }
+
+        async function saveBuyer(event) {
+            event.preventDefault();
+            
+            const stockIndex = parseInt(document.getElementById('buyerStockIndex').value);
+            const buyerIndex = parseInt(document.getElementById('buyerItemIndex').value);
+            
+            const name = document.getElementById('buyerName').value.trim();
+            const price = parseFloat(document.getElementById('buyerPrice').value) || 0;
+            const date = document.getElementById('buyerDate').value;
+            
+            const list = getWatchList();
+            const stock = list[stockIndex];
+            
+            let calculatedPrice = 0;
+            if (price === 0 && date) {
+                calculatedPrice = await fetchHistoricalOpen(stock.code, date) || 0;
+            }
+            
+            const buyer = {
+                name,
+                price,
+                date,
+                calculatedPrice
+            };
+            
+            if (buyerIndex >= 0) {
+                stock.buyers[buyerIndex] = buyer;
+            } else {
+                stock.buyers.push(buyer);
+            }
+            
+            saveWatchList(list);
+            showBuyerModal(stockIndex);
+        }
+
+        // 查询股票
+        async function queryStock() {
+            const input = document.getElementById('stockInput');
+            const resultBox = document.getElementById('queryResult');
+            
+            const codes = input.value
+                .split(/[,\s,]+/)
+                .filter(c => c.trim())
+                .map(formatStockCode);
+
+            if (codes.length === 0) {
+                resultBox.style.display = 'block';
+                resultBox.innerHTML = '<div class="error">请输入股票代码</div>';
+                return;
+            }
+
+            resultBox.style.display = 'block';
+            resultBox.innerHTML = '<div class="loading">正在查询行情...</div>';
+
+            const promises = codes.map(code => fetchStockData(code));
+            const results = await Promise.all(promises);
+            const validResults = results.filter(r => r !== null);
+
+            if (validResults.length === 0) {
+                resultBox.innerHTML = '<div class="error">未找到股票信息，请检查股票代码是否正确</div>';
+                return;
+            }
+
+            let html = '<div style="margin-top: 15px;">';
+            validResults.forEach(stock => {
+                const priceClass = stock.changePercent >= 0 ? 'price-up' : 'price-down';
+                const changeSign = stock.changePercent >= 0 ? '+' : '';
+                const market = detectMarket(stock.code);
+                html += `
+                    <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span style="font-weight: bold;">${stock.name}</span>
+                            <span style="color: #999;">${stock.code}</span>
+                        </div>
+                        <div style="font-size: 28px; font-weight: bold;" class="${priceClass}">
+                            ¥${stock.current.toFixed(2)}
+                            <span style="font-size: 16px; margin-left: 10px;">
+                                ${changeSign}${stock.change.toFixed(2)} (${changeSign}${stock.changePercent.toFixed(2)}%)
+                            </span>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; font-size: 14px;">
+                            <div><span style="color: #999;">今开:</span> ${stock.open.toFixed(2)}</div>
+                            <div><span style="color: #999;">昨收:</span> ${stock.close.toFixed(2)}</div>
+                            <div><span style="color: #999;">最高:</span> ${stock.high.toFixed(2)}</div>
+                            <div><span style="color: #999;">最低:</span> ${stock.low.toFixed(2)}</div>
+                            <div><span style="color: #999;">涨跌:</span> ${changeSign}${stock.change.toFixed(2)}</div>
+                            <div><span style="color: #999;">幅度:</span> ${changeSign}${stock.changePercent.toFixed(2)}%</div>
+                        </div>
+                        <button class="btn btn-small" style="margin-top: 10px;" onclick="addToWatch('${stock.code}', '${stock.name}')">
+                            ➕ 添加到关注
+                        </button>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            resultBox.innerHTML = html;
+        }
+
+        // 添加到关注
+        function addToWatch(code, name) {
+            const list = getWatchList();
+            const exists = list.findIndex(s => s.code === code);
+            if (exists >= 0) {
+                alert('该股票已在关注列表中！');
+                return;
+            }
+            
+            fetchStockData(code).then(data => {
+                const stock = {
+                    code,
+                    name: name || (data ? data.name : ''),
+                    market: detectMarket(code),
+                    watchPrice: data ? data.current : 0,
+                    watchDate: new Date().toISOString().split('T')[0],
+                    recommender: '',
+                    buyers: []
+                };
+                list.push(stock);
+                saveWatchList(list);
+                alert('已添加到关注列表！');
+                switchTab('watch');
+            });
+        }
+
+        // 回车键查询
+        document.getElementById('stockInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                queryStock();
+            }
+        });
+
+        // 点击模态框外部关闭
+        document.getElementById('stockModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        document.getElementById('buyerModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeBuyerModal();
+            }
+        });
+
+        // 页面加载
+        window.onload = function() {
+            refreshWatchList();
+        };
+    </script>
+</body>
+</html>
