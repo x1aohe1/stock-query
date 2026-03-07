@@ -104,5 +104,14 @@
     "watchDate": "2026-03-06",
     "recommender": "测试",
     "buyers": []
+  },
+  {
+    "code": "HK00700",
+    "name": "腾讯控股",
+    "market": "hk",
+    "watchPrice": 504.0,
+    "watchDate": "2026-03-06",
+    "recommender": "系统添加",
+    "buyers": []
   }
 ]
