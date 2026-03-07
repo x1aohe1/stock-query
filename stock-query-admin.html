@@ -757,9 +757,15 @@
         // 获取股票数据（JSONP 方式）
         function fetchStockData(code) {
             return new Promise((resolve) => {
-                const varName = 'v_' + code.toLowerCase();
+                // 美股代码特殊处理：USNVDA -> usNVDA
+                let tencentCode = code.toLowerCase();
+                if (code.startsWith('US')) {
+                    tencentCode = 'us' + code.substring(2);
+                }
+                
+                const varName = 'v_' + tencentCode;
                 const script = document.createElement('script');
-                script.src = TENCENT_API + 'q=' + code.toLowerCase();
+                script.src = TENCENT_API + 'q=' + tencentCode;
                 
                 const timeout = setTimeout(() => {
                     if (document.head.contains(script)) document.head.removeChild(script);
