@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>导出数据 - 股票关注列表</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px 10px 10px 0;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        textarea {
+            width: 100%;
+            height: 300px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 15px 0;
+            resize: vertical;
+        }
+        .hint {
+            background: #e8f4fd;
+            color: #0066cc;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>📤 导出数据</h1>
+        
+        <div class="hint">
+            <strong>说明：</strong><br>
+            点击下方按钮，将浏览器中的股票关注数据导出为 JSON 文件。<br>
+            导出后可以保存到安全位置，或导入到其他设备。
+        </div>
+
+        <button class="btn" onclick="exportData()">📥 导出数据</button>
+        <button class="btn" onclick="copyData()">📋 复制到剪贴板</button>
+
+        <div id="output" style="display: none;">
+            <h3 style="margin-top: 20px;">导出的数据：</h3>
+            <textarea id="dataOutput" readonly></textarea>
+            <div id="successMsg" class="success" style="display: none;">
+                ✅ 已复制到剪贴板！可以粘贴保存了。
+            </div>
+        </div>
+
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #e0e0e0;">
+
+        <h1>📥 导入数据</h1>
+        
+        <div class="hint">
+            <strong>说明：</strong><br>
+            粘贴之前导出的 JSON 数据，点击导入即可恢复。
+        </div>
+
+        <textarea id="importData" placeholder="在这里粘贴之前导出的 JSON 数据..."></textarea>
+        
+        <button class="btn" onclick="importData()">📥 导入数据</button>
+
+        <div id="importMsg" style="margin-top: 15px;"></div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'stockWatchList_v3';
+
+        function exportData() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            const output = document.getElementById('output');
+            const dataOutput = document.getElementById('dataOutput');
+            
+            if (!data) {
+                alert('没有找到数据！');
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(data);
+                // 格式化输出
+                const formatted = JSON.stringify(parsed, null, 2);
+                dataOutput.value = formatted;
+                output.style.display = 'block';
+            } catch (e) {
+                alert('数据格式错误：' + e.message);
+            }
+        }
+
+        function copyData() {
+            const dataOutput = document.getElementById('dataOutput');
+            if (!dataOutput.value) {
+                alert('请先导出数据！');
+                return;
+            }
+
+            dataOutput.select();
+            document.execCommand('copy');
+            
+            const successMsg = document.getElementById('successMsg');
+            successMsg.style.display = 'block';
+            setTimeout(() => {
+                successMsg.style.display = 'none';
+            }, 3000);
+        }
+
+        function importData() {
+            const importData = document.getElementById('importData');
+            const importMsg = document.getElementById('importMsg');
+            
+            if (!importData.value.trim()) {
+                importMsg.innerHTML = '<div style="color: #dc3545;">❌ 请输入要导入的数据</div>';
+                return;
+            }
+
+            try {
+                const parsed = JSON.parse(importData.value);
+                
+                // 验证数据格式
+                if (!Array.isArray(parsed)) {
+                    throw new Error('数据格式错误：应该是数组');
+                }
+
+                // 保存数据
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+                
+                importMsg.innerHTML = '<div style="color: #28a745;">✅ 导入成功！刷新页面即可看到数据。</div>';
+                
+                // 3 秒后建议刷新
+                setTimeout(() => {
+                    if (confirm('导入成功！是否现在刷新页面？')) {
+                        location.reload();
+                    }
+                }, 1000);
+            } catch (e) {
+                importMsg.innerHTML = `<div style="color: #dc3545;">❌ 导入失败：${e.message}</div>`;
+            }
+        }
+    </script>
+</body>
+</html>
