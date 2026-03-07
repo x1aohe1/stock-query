@@ -1,10 +1,98 @@
 [
   {
-    "code": "SH600519",
-    "name": "贵州茅台",
+    "code": "SZ002716",
+    "name": "湖南白银",
     "market": "a",
-    "watchPrice": 1400.00,
-    "watchDate": "2025-01-01",
+    "watchPrice": 0,
+    "watchDate": "2026-01-23",
+    "recommender": "张总",
+    "buyers": [
+      {
+        "name": "嘉俊",
+        "price": 14.96,
+        "date": "",
+        "calculatedPrice": 0
+      },
+      {
+        "name": "张总",
+        "price": 0,
+        "date": "2026-01-23",
+        "calculatedPrice": 0
+      }
+    ]
+  },
+  {
+    "code": "HK06960",
+    "name": "双登股份",
+    "market": "hk",
+    "watchPrice": 0,
+    "watchDate": "2026-03-07",
+    "recommender": "大狗",
+    "buyers": [
+      {
+        "name": "大狗",
+        "price": 0,
+        "date": "2025-10-31",
+        "calculatedPrice": 0
+      },
+      {
+        "name": "dk",
+        "price": 0,
+        "date": "2025-11-04",
+        "calculatedPrice": 0
+      }
+    ]
+  },
+  {
+    "code": "SH600416",
+    "name": "湘电股份",
+    "market": "a",
+    "watchPrice": 0,
+    "watchDate": "2026-03-07",
+    "recommender": "大狗",
+    "buyers": [
+      {
+        "name": "张总",
+        "price": 13,
+        "date": "",
+        "calculatedPrice": 0
+      },
+      {
+        "name": "钟总",
+        "price": 13,
+        "date": "",
+        "calculatedPrice": 0
+      }
+    ]
+  },
+  {
+    "code": "SZ002409",
+    "name": "雅克科技",
+    "market": "a",
+    "watchPrice": 0,
+    "watchDate": "2025-11-05",
+    "recommender": "大狗",
+    "buyers": [
+      {
+        "name": "赖总",
+        "price": 0,
+        "date": "2026-01-05",
+        "calculatedPrice": 62.05
+      },
+      {
+        "name": "大狗",
+        "price": 0,
+        "date": "2025-11-05",
+        "calculatedPrice": 62.05
+      }
+    ]
+  },
+  {
+    "code": "USNVDA",
+    "name": "英伟达",
+    "market": "us",
+    "watchPrice": 0,
+    "watchDate": "2026-03-07",
     "recommender": "",
     "buyers": []
   }
