@@ -3,7 +3,7 @@
     "code": "SZ002716",
     "name": "湖南白银",
     "market": "a",
-    "watchPrice": 0,
+    "watchPrice": 16.0,
     "watchDate": "2026-01-23",
     "recommender": "张总",
     "buyers": [
@@ -15,7 +15,7 @@
       },
       {
         "name": "张总",
-        "price": 0,
+        "price": 16.0,
         "date": "2026-01-23",
         "calculatedPrice": 0
       }
