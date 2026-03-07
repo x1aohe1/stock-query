@@ -5,7 +5,7 @@
     "market": "a",
     "watchPrice": 16.0,
     "watchDate": "2026-01-23",
-    "recommender": "测试推送",
+    "recommender": "张总",
     "buyers": [
       {
         "name": "嘉俊",
@@ -25,21 +25,21 @@
     "code": "HK06960",
     "name": "双登股份",
     "market": "hk",
-    "watchPrice": 15.44,
-    "watchDate": "2026-01-05T16:00:00.000Z",
+    "watchPrice": 0,
+    "watchDate": "2026-03-07",
     "recommender": "大狗",
     "buyers": [
       {
         "name": "大狗",
-        "price": 0.0,
+        "price": 0,
         "date": "2025-10-31",
-        "calculatedPrice": 0.0
+        "calculatedPrice": 0
       },
       {
         "name": "dk",
-        "price": 0.0,
+        "price": 0,
         "date": "2025-11-04",
-        "calculatedPrice": 0.0
+        "calculatedPrice": 0
       }
     ]
   },
@@ -89,10 +89,10 @@
   },
   {
     "code": "USNVDA",
-    "name": "USNVDA",
+    "name": "英伟达",
     "market": "us",
     "watchPrice": 0,
-    "watchDate": "2025-12-01T16:00:00.000Z",
+    "watchDate": "2026-03-07",
     "recommender": "",
     "buyers": []
   },
@@ -100,9 +100,9 @@
     "code": "HK00700",
     "name": "腾讯控股",
     "market": "hk",
-    "watchPrice": 0,
-    "watchDate": "2026-03-07",
-    "recommender": "",
+    "watchPrice": 504.0,
+    "watchDate": "2026-03-06",
+    "recommender": "测试",
     "buyers": []
   }
 ]
