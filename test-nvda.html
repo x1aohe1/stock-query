@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>测试英伟达行情</title>
+</head>
+<body>
+    <h1>测试英伟达行情</h1>
+    <div id="result">正在加载...</div>
+    
+    <script>
+        const TENCENT_API = 'https://qt.gtimg.cn/';
+        
+        function testNVDA() {
+            const result = document.getElementById('result');
+            
+            // 美股代码：USNVDA -> usNVDA
+            const code = 'USNVDA';
+            const tencentCode = 'us' + code.substring(2); // usNVDA
+            const varName = 'v_' + tencentCode; // v_usNVDA
+            
+            console.log('请求代码:', tencentCode);
+            console.log('变量名:', varName);
+            
+            const script = document.createElement('script');
+            script.src = TENCENT_API + 'q=' + tencentCode;
+            
+            result.innerHTML = '正在请求腾讯 API: ' + script.src + '<br>等待回调...';
+            
+            const timeout = setTimeout(() => {
+                result.innerHTML += '<br><span style="color:red">❌ 超时！5 秒未响应</span>';
+                if (document.head.contains(script)) document.head.removeChild(script);
+            }, 5000);
+            
+            const checkVar = setInterval(() => {
+                if (window[varName]) {
+                    clearTimeout(timeout);
+                    clearInterval(checkVar);
+                    
+                    const data = window[varName];
+                    console.log('原始数据:', data);
+                    
+                    // 解析数据
+                    let content = data.split('=')[1]?.replace(/^"|"$/g, '');
+                    if (!content) {
+                        result.innerHTML += '<br><span style="color:red">❌ 数据格式错误</span>';
+                        return;
+                    }
+                    
+                    const elements = content.split('~');
+                    console.log('解析后的元素:', elements);
+                    
+                    if (elements.length < 50) {
+                        result.innerHTML += '<br><span style="color:red">❌ 数据不完整</span>';
+                        return;
+                    }
+                    
+                    const name = elements[1];
+                    const current = parseFloat(elements[3]) || 0;
+                    const close = parseFloat(elements[4]) || 0;
+                    const change = current - close;
+                    const changePercent = close > 0 ? (change / close * 100) : 0;
+                    
+                    result.innerHTML = `
+                        <div style="font-size:24px;font-weight:bold;margin:20px 0">
+                            ✅ 成功获取英伟达行情！
+                        </div>
+                        <table style="border-collapse:collapse;font-size:16px">
+                            <tr><td style="padding:8px;border:1px solid #ddd">名称</td><td style="padding:8px;border:1px solid #ddd">${name}</td></tr>
+                            <tr><td style="padding:8px;border:1px solid #ddd">当前价</td><td style="padding:8px;border:1px solid #ddd;color:${change>=0?'red':'green'}">${current.toFixed(2)} USD</td></tr>
+                            <tr><td style="padding:8px;border:1px solid #ddd">昨收</td><td style="padding:8px;border:1px solid #ddd">${close.toFixed(2)} USD</td></tr>
+                            <tr><td style="padding:8px;border:1px solid #ddd">涨跌</td><td style="padding:8px;border:1px solid #ddd;color:${change>=0?'red':'green'}">${change.toFixed(2)} (${changePercent.toFixed(2)}%)</td></tr>
+                        </table>
+                        <div style="margin-top:20px;font-size:12px;color:#666">
+                            原始数据：<br>${data.substring(0, 200)}...
+                        </div>
+                    `;
+                    
+                    delete window[varName];
+                    if (document.head.contains(script)) document.head.removeChild(script);
+                }
+            }, 50);
+            
+            document.head.appendChild(script);
+        }
+        
+        testNVDA();
+    </script>
+</body>
+</html>
