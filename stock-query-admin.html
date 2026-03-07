@@ -428,7 +428,11 @@
     </div>
 
     <script>
+        // 本地 API 服务（AkShare）
+        const LOCAL_API = 'http://127.0.0.1:8765';
+        // 备用腾讯 API
         const TENCENT_API = 'https://qt.gtimg.cn/';
+        
         const GITHUB_OWNER = 'x1aohe1';
         const GITHUB_REPO = 'stock-query';
         const GITHUB_PATH = 'stock-data.json';
@@ -600,9 +604,12 @@
                 const current = data ? data.current : 0;
                 const changePercent = data ? data.changePercent : 0;
 
+                // 计算从关注至今的收益率
                 let watchGainPercent = 0;
+                let watchGain = 0;
                 if (stock.watchPrice > 0 && current > 0) {
-                    watchGainPercent = ((current - stock.watchPrice) / stock.watchPrice) * 100;
+                    watchGain = current - stock.watchPrice;
+                    watchGainPercent = (watchGain / stock.watchPrice) * 100;
                 }
 
                 let buyerHtml = '';
@@ -628,7 +635,10 @@
                     <td><div class="stock-name">${stock.name || stock.code}</div><div class="stock-code">${stock.code}</div></td>
                     <td class="${priceClass}">¥${current > 0 ? current.toFixed(2) : '--'}</td>
                     <td class="${priceClass}">${changeSign}${changePercent.toFixed(2)}%</td>
-                    <td class="${watchGainClass}">${stock.watchPrice > 0 ? watchGainSign + watchGainPercent.toFixed(2) + '%' : '--'}</td>
+                    <td class="${watchGainClass}">
+                        ${stock.watchPrice > 0 ? watchGainSign + watchGainPercent.toFixed(2) + '%' : '--'}
+                        ${stock.watchPrice > 0 ? '<br><small style="color:#999;font-size:11px">关注价：' + stock.watchPrice.toFixed(2) + '</small>' : ''}
+                    </td>
                     <td>${stock.recommender || '--'}</td>
                     <td style="min-width:200px">${buyerHtml || '<span style="color:#999">无</span>'}</td>
                     <td>
@@ -642,8 +652,27 @@
             document.getElementById('tableContent').innerHTML = html;
         }
 
-        // 获取股票数据
-        function fetchStockData(code) {
+        // 获取股票数据 - 优先使用本地 API
+        async function fetchStockData(code) {
+            // 尝试本地 API
+            try {
+                const resp = await fetch(`${LOCAL_API}/quote?symbol=${code}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    if (!data.error) {
+                        return data;
+                    }
+                }
+            } catch (e) {
+                console.log('Local API not available, using Tencent');
+            }
+            
+            // 降级到腾讯 API
+            return fetchStockDataTencent(code);
+        }
+        
+        // 腾讯 API 备用方案
+        function fetchStockDataTencent(code) {
             return new Promise((resolve) => {
                 const varName = 'v_' + code.toLowerCase();
                 const script = document.createElement('script');
@@ -680,9 +709,26 @@
                 name: elements[1] || '',
                 current: parseFloat(elements[3]) || 0,
                 close: parseFloat(elements[4]) || 0,
+                open: parseFloat(elements[5]) || 0,
+                high: parseFloat(elements[32]) || 0,
+                low: parseFloat(elements[33]) || 0,
                 change: parseFloat(elements[3]) - parseFloat(elements[4]),
                 changePercent: parseFloat(elements[4]) > 0 ? ((parseFloat(elements[3]) - parseFloat(elements[4])) / parseFloat(elements[4]) * 100) : 0
             };
+        }
+        
+        // 获取历史开盘价
+        async function fetchHistoricalOpen(code, date) {
+            try {
+                const resp = await fetch(`${LOCAL_API}/history?symbol=${code}&date=${date}`);
+                if (resp.ok) {
+                    const data = await resp.json();
+                    return data.open || null;
+                }
+            } catch (e) {
+                console.log('History API not available');
+            }
+            return null;
         }
 
         // 格式化代码
@@ -776,17 +822,18 @@
             
             const editIndex = parseInt(document.getElementById('editIndex').value);
             const code = formatStockCode(document.getElementById('stockCode').value);
-            const name = document.getElementById('stockName').value.trim();
+            let name = document.getElementById('stockName').value.trim();
             const watchPrice = parseFloat(document.getElementById('watchPrice').value) || 0;
             const watchDate = document.getElementById('watchDate').value;
             const recommender = document.getElementById('recommender').value.trim();
 
-            // 获取名称
-            let finalName = name;
-            if (!finalName) {
-                const data = await fetchStockData(code);
-                if (data) finalName = data.name;
-            }
+            // 获取实时行情和名称
+            const stockData = await fetchStockData(code);
+            let finalName = name || (stockData ? stockData.name : '');
+            let currentPrice = stockData ? stockData.current : 0;
+            
+            // 如果 watchPrice 为空，使用当前价
+            let finalWatchPrice = watchPrice > 0 ? watchPrice : currentPrice;
 
             // 收集买入者
             const buyers = [];
@@ -804,7 +851,7 @@
                 code,
                 name: finalName,
                 market: detectMarket(code),
-                watchPrice,
+                watchPrice: finalWatchPrice,
                 watchDate,
                 recommender,
                 buyers
