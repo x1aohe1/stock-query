@@ -493,13 +493,11 @@
         // 从 GitHub 加载数据
         async function loadData() {
             try {
-                const token = getToken();
-                const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_PATH}?ref=${GITHUB_BRANCH}`;
+                // 直接加载 raw 文件，避免 base64 编码问题
+                const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_PATH}?t=${Date.now()}`;
                 
-                const resp = await fetch(url, {
-                    headers: token ? { 'Authorization': `token ${token}` } : {}
-                });
-
+                const resp = await fetch(rawUrl);
+                
                 if (!resp.ok) {
                     if (resp.status === 404) {
                         watchList = [];
@@ -509,9 +507,7 @@
                     throw new Error('加载失败');
                 }
 
-                const data = await resp.json();
-                fileSha = data.sha;
-                watchList = JSON.parse(atob(data.content));
+                watchList = await resp.json();
                 
             } catch (e) {
                 console.error('加载失败:', e);
