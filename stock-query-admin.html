@@ -651,46 +651,21 @@
             document.getElementById('tableContent').innerHTML = html;
         }
 
-        // 获取股票数据 - 优先使用本地 API
-        async function fetchStockData(code) {
-            // 尝试本地 API
-            try {
-                const resp = await fetch(`${LOCAL_API}/quote?symbol=${code}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data && !data.error && data.name) {
-                        // 解码 Unicode 名称
-                        if (data.name.startsWith('\\u')) {
-                            try {
-                                data.name = JSON.parse('"' + data.name + '"');
-                            } catch (e) {}
-                        }
-                        return data;
-                    }
-                }
-            } catch (e) {
-                console.log('Local API not available');
-            }
-            
-            // 降级到腾讯 API
-            return fetchStockDataTencent(code);
-        }
-        
-        // 腾讯 API 备用方案
-        function fetchStockDataTencent(code) {
+        // 获取股票数据 - 直接使用腾讯 API（JSONP 方式）
+        function fetchStockData(code) {
             return new Promise((resolve) => {
                 const varName = 'v_' + code.toLowerCase();
                 const script = document.createElement('script');
                 script.src = TENCENT_API + 'q=' + code.toLowerCase();
                 
-                setTimeout(() => {
+                const timeout = setTimeout(() => {
                     if (document.head.contains(script)) document.head.removeChild(script);
                     resolve(null);
                 }, 5000);
 
                 const checkVar = setInterval(() => {
                     if (window[varName]) {
-                        clearTimeout(checkVar);
+                        clearTimeout(timeout);
                         clearInterval(checkVar);
                         const data = parseTencentData(window[varName], code);
                         delete window[varName];
@@ -722,20 +697,11 @@
             };
         }
         
-        // 获取历史开盘价 - 使用本地 API（AkShare）
+        // 获取历史开盘价 - 提示用户手动输入
         async function fetchHistoricalOpen(code, date) {
-            try {
-                const resp = await fetch(`${LOCAL_API}/history?symbol=${code}&date=${date}`);
-                if (resp.ok) {
-                    const data = await resp.json();
-                    if (data.open) {
-                        return data.open;
-                    }
-                }
-            } catch (e) {
-                console.log('History API not available:', e);
-            }
-            return null;
+            // 浏览器端无法直接获取历史数据，返回 0 让用户手动输入
+            console.log('History data requires local API. Please enter price manually.');
+            return 0;
         }
 
         // 格式化代码
