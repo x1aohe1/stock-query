@@ -395,21 +395,263 @@
             font-size: 15px;
         }
 
+        /* 平板适配 */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            h1 {
+                font-size: 20px;
+                margin-bottom: 15px;
+            }
+            
+            .shared-notice, .data-source-hint {
+                padding: 10px 15px;
+                font-size: 13px;
+            }
+            
+            .market-filter {
+                gap: 6px;
+            }
+            
+            .market-btn {
+                padding: 6px 12px;
+                font-size: 13px;
+            }
+            
+            .tabs {
+                gap: 6px;
+            }
+            
+            .tab {
+                padding: 12px 15px;
+                font-size: 14px;
+            }
+            
+            .panel {
+                padding: 15px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-label {
+                font-size: 12px;
+            }
+            
+            .stat-value {
+                font-size: 18px;
+            }
+            
             .watch-table {
                 font-size: 12px;
             }
             
             .watch-table th, .watch-table td {
+                padding: 8px 6px;
+            }
+            
+            .actions {
+                flex-direction: column;
+                gap: 4px;
+            }
+            
+            .btn {
+                padding: 8px 14px;
+                font-size: 13px;
+            }
+            
+            .btn-small {
+                padding: 5px 10px;
+                font-size: 11px;
+            }
+        }
+
+        /* 手机适配 */
+        @media (max-width: 480px) {
+            body {
                 padding: 8px;
+            }
+            
+            h1 {
+                font-size: 18px;
+            }
+            
+            .shared-notice, .data-source-hint {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+            
+            .market-filter {
+                flex-wrap: wrap;
+            }
+            
+            .market-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+                flex: 1 1 calc(50% - 6px);
+                text-align: center;
             }
             
             .tabs {
                 flex-direction: column;
+                gap: 5px;
             }
             
             .tab {
+                padding: 12px;
+                font-size: 14px;
+                border-radius: 8px;
+            }
+            
+            .panel {
+                padding: 12px;
+                border-radius: 8px;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .stat-card {
+                padding: 12px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            .stat-value {
+                font-size: 16px;
+            }
+            
+            /* 表格改为卡片式布局 */
+            .watch-table {
+                display: block;
+                font-size: 13px;
+            }
+            
+            .watch-table thead {
+                display: none;
+            }
+            
+            .watch-table tbody {
+                display: block;
+            }
+            
+            .watch-table tr {
+                display: block;
+                background: white;
+                border: 1px solid #e0e0e0;
                 border-radius: 10px;
+                padding: 12px;
+                margin-bottom: 12px;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            }
+            
+            .watch-table td {
+                display: block;
+                padding: 6px 0;
+                border-bottom: 1px solid #f0f0f0;
+                text-align: left !important;
+            }
+            
+            .watch-table td:last-child {
+                border-bottom: none;
+            }
+            
+            .watch-table td:first-child {
+                padding-top: 0;
+            }
+            
+            .watch-table td:last-child {
+                padding-bottom: 0;
+            }
+            
+            /* 添加标签显示列名 */
+            .watch-table td::before {
+                content: attr(data-label);
+                font-weight: 600;
+                color: #666;
+                display: block;
+                font-size: 11px;
+                margin-bottom: 3px;
+            }
+            
+            .stock-name {
+                font-size: 15px;
+            }
+            
+            .stock-code {
+                font-size: 11px;
+            }
+            
+            .market-tag {
+                font-size: 9px;
+                padding: 1px 4px;
+            }
+            
+            .price-up, .price-down {
+                font-size: 16px;
+            }
+            
+            .total-return {
+                padding: 6px 10px;
+            }
+            
+            .total-return .label {
+                font-size: 10px;
+            }
+            
+            .total-return .value {
+                font-size: 14px;
+            }
+            
+            .buyer-tag {
+                font-size: 11px;
+                padding: 3px 6px;
+                margin: 2px;
+            }
+            
+            .actions {
+                flex-direction: row;
+                gap: 6px;
+                margin-top: 10px;
+            }
+            
+            .actions .btn {
+                flex: 1;
+                text-align: center;
+            }
+            
+            .input-group {
+                flex-direction: column;
+            }
+            
+            .input-group input {
+                width: 100%;
+            }
+            
+            .input-group .btn {
+                width: 100%;
+            }
+            
+            .tips {
+                font-size: 12px;
+                padding: 12px;
+            }
+            
+            .refresh-btn {
+                width: 100%;
+                margin-bottom: 10px;
             }
         }
     </style>
@@ -858,13 +1100,13 @@
 
                 html += `
                     <tr>
-                        <td>
+                        <td data-label="股票">
                             <div class="stock-name">${stock.name || stock.code} ${marketTag}</div>
                             <div class="stock-code">${stock.code}</div>
                         </td>
-                        <td class="${priceClass}">¥${current > 0 ? current.toFixed(2) : '--'}</td>
-                        <td class="${priceClass}">${changeSign}${changePercent.toFixed(2)}%</td>
-                        <td>
+                        <td data-label="当前价" class="${priceClass}">¥${current > 0 ? current.toFixed(2) : '--'}</td>
+                        <td data-label="今日涨跌" class="${priceClass}">${changeSign}${changePercent.toFixed(2)}%</td>
+                        <td data-label="关注总收益">
                             <div class="total-return">
                                 <div class="label">从关注至今</div>
                                 <div class="value ${watchGainClass}">
@@ -873,8 +1115,8 @@
                             </div>
                             ${stock.watchPrice > 0 ? '<div class="hint" style="text-align:center">关注价：' + stock.watchPrice.toFixed(2) + '</div>' : ''}
                         </td>
-                        <td>${stock.recommender || '--'}</td>
-                        <td style="min-width: 200px;">${buyerHtml || '<span style="color:#999">无</span>'}</td>
+                        <td data-label="推荐人">${stock.recommender || '--'}</td>
+                        <td data-label="买入者" style="min-width: 200px;">${buyerHtml || '<span style="color:#999">无</span>'}</td>
                     </tr>
                 `;
             }
