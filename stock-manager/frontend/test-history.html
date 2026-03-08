@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>历史数据测试</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+        .test-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+        .test-card h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 18px;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+        .form-row .form-group {
+            flex: 1;
+        }
+        .btn {
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-right: 10px;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        .btn:active {
+            transform: translateY(0);
+        }
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .result-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: monospace;
+            font-size: 13px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .result-box.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .result-box.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .result-box.loading {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .quick-test {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .quick-test button {
+            padding: 8px 16px;
+            background: #e8f4fd;
+            color: #0066cc;
+            border: 1px solid #b3d9ff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+        .quick-test button:hover {
+            background: #d0e9ff;
+        }
+        .log-box {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .log-entry {
+            margin-bottom: 5px;
+        }
+        .log-entry.info { color: #4ec9b0; }
+        .log-entry.success { color: #6a9955; }
+        .log-entry.error { color: #f44747; }
+        .log-entry.warn { color: #dcdcaa; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 历史数据 API 测试</h1>
+
+        <!-- 测试 1：双登股份 -->
+        <div class="test-card">
+            <h2>测试 1：双登股份 (HK00700)</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>股票代码</label>
+                    <input type="text" id="test1_code" value="HK00700" readonly>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="test1_date" value="2026-01-02">
+                </div>
+            </div>
+            <div class="quick-test">
+                <button onclick="setDate('test1_date', '2026-01-02')">2026-01-02</button>
+                <button onclick="setDate('test1_date', '2026-01-05')">2026-01-05</button>
+                <button onclick="setDate('test1_date', '2026-02-12')">2026-02-12</button>
+                <button onclick="setDate('test1_date', '2026-03-06')">2026-03-06</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn" onclick="testHistory('test1')">🚀 测试获取历史数据</button>
+                <button class="btn" onclick="testQuote('HK00700')">📊 测试实时行情</button>
+            </div>
+            <div id="test1_result" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- 测试 2：英伟达 -->
+        <div class="test-card">
+            <h2>测试 2：英伟达 (USNVDA)</h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>股票代码</label>
+                    <input type="text" id="test2_code" value="USNVDA" readonly>
+                </div>
+                <div class="form-group">
+                    <label>日期</label>
+                    <input type="date" id="test2_date" value="2026-01-02">
+                </div>
+            </div>
+            <div class="quick-test">
+                <button onclick="setDate('test2_date', '2026-01-02')">2026-01-02</button>
+                <button onclick="setDate('test2_date', '2026-01-23')">2026-01-23</button>
+                <button onclick="setDate('test2_date', '2026-02-12')">2026-02-12</button>
+                <button onclick="setDate('test2_date', '2026-03-06')">2026-03-06</button>
+            </div>
+            <div style="margin-top: 15px;">
+                <button class="btn" onclick="testHistory('test2')">🚀 测试获取历史数据</button>
+                <button class="btn" onclick="testQuote('USNVDA')">📊 测试实时行情</button>
+            </div>
+            <div id="test2_result" class="result-box" style="display: none;"></div>
+        </div>
+
+        <!-- 日志 -->
+        <div class="test-card">
+            <h2>📝 请求日志</h2>
+            <div id="logBox" class="log-box"></div>
+            <button class="btn" onclick="clearLog()" style="margin-top: 10px;">🗑️ 清空日志</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8766/api';
+
+        function log(message, type = 'info') {
+            const logBox = document.getElementById('logBox');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${timestamp}] ${message}`;
+            logBox.appendChild(entry);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function clearLog() {
+            document.getElementById('logBox').innerHTML = '';
+        }
+
+        function setDate(inputId, date) {
+            document.getElementById(inputId).value = date;
+        }
+
+        function showResult(testId, data, type) {
+            const resultBox = document.getElementById(testId + '_result');
+            resultBox.style.display = 'block';
+            resultBox.className = `result-box ${type}`;
+            resultBox.textContent = JSON.stringify(data, null, 2);
+        }
+
+        async function testHistory(testId) {
+            const code = document.getElementById(testId + '_code').value;
+            const date = document.getElementById(testId + '_date').value;
+            
+            log(`开始测试：${code} ${date}`, 'info');
+            showResult(testId, { status: 'loading', message: '正在请求...' }, 'loading');
+
+            try {
+                // 测试标准格式
+                const url1 = `${API_BASE}/stocks/${code}/history?date=${date}`;
+                log(`请求 URL: ${url1}`, 'info');
+                
+                const resp1 = await fetch(url1);
+                log(`响应状态：${resp1.status}`, resp1.ok ? 'success' : 'error');
+                
+                const data1 = await resp1.json();
+                
+                if (resp1.ok && data1.success) {
+                    log(`✅ 获取成功：开盘价 ${data1.data.open}`, 'success');
+                    showResult(testId, {
+                        test: '标准格式',
+                        url: url1,
+                        result: data1
+                    }, 'success');
+                } else {
+                    log(`❌ 获取失败：${data1.detail || JSON.stringify(data1)}`, 'error');
+                    showResult(testId, {
+                        test: '标准格式',
+                        url: url1,
+                        error: data1
+                    }, 'error');
+                }
+
+                // 测试 ISO 格式
+                await new Promise(r => setTimeout(r, 1000));
+                const isoDate = date + 'T00:00:00.000Z';
+                const url2 = `${API_BASE}/stocks/${code}/history?date=${isoDate}`;
+                log(`\n测试 ISO 格式：${isoDate}`, 'info');
+                
+                const resp2 = await fetch(url2);
+                const data2 = await resp2.json();
+                
+                if (resp2.ok && data2.success) {
+                    log(`✅ ISO 格式成功：开盘价 ${data2.data.open}`, 'success');
+                    showResult(testId, {
+                        test1: '标准格式',
+                        result1: data1,
+                        test2: 'ISO 格式',
+                        url2: url2,
+                        result2: data2
+                    }, 'success');
+                } else {
+                    log(`❌ ISO 格式失败：${data2.detail}`, 'error');
+                }
+
+            } catch (e) {
+                log(`❌ 请求异常：${e.message}`, 'error');
+                showResult(testId, { error: e.message, stack: e.stack }, 'error');
+            }
+        }
+
+        async function testQuote(code) {
+            log(`测试实时行情：${code}`, 'info');
+            
+            try {
+                const url = `${API_BASE}/stocks/${code}/quote`;
+                log(`请求 URL: ${url}`, 'info');
+                
+                const resp = await fetch(url);
+                log(`响应状态：${resp.status}`, resp.ok ? 'success' : 'error');
+                
+                const data = await resp.json();
+                
+                if (resp.ok && data.success) {
+                    log(`✅ 获取成功：${data.data.name} 当前价 ${data.data.current}`, 'success');
+                    alert(`获取成功！\n\n${data.data.name}\n当前价：${data.data.current}\n涨跌：${data.data.changePercent.toFixed(2)}%`);
+                } else {
+                    log(`❌ 获取失败：${data.detail}`, 'error');
+                    alert(`获取失败：${data.detail}`);
+                }
+            } catch (e) {
+                log(`❌ 请求异常：${e.message}`, 'error');
+                alert(`请求异常：${e.message}`);
+            }
+        }
+
+        // 初始化日志
+        log('测试页面已加载', 'info');
+        log('后端 API 地址：' + API_BASE, 'info');
+    </script>
+</body>
+</html>
